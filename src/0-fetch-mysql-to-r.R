@@ -1,13 +1,12 @@
 library(here)
 library(tidyverse)
 library(dbplyr)
-`%notin%` <- function(x, y) !(x %in% y)
 
 # conecta ----------------------------------------------------------------------
 source(here("local-files/conecta-mydb.R"))
 
 # carrega tabelas do banco de dados --------------------------------------------
-tblai <- DBI::dbListTables(mydb)
+tblai_tb <- DBI::dbListTables(mydb)
 
 pedidos <- tbl(mydb, "pedidos")
 interac <- tbl(mydb, "pedidos_interacoes")
@@ -18,12 +17,31 @@ agentes <- tbl(mydb, "agentes")
 cod_pedidos_ativos <- pedidos %>% filter(Ativo == 1) %>% pull(Codigo)
 
 # fetch no R -------------------------------------------------------------------
-pedidos <- pedidos %>% filter(Codigo %in% cod_pedidos_ativos) %>% collect()
-interac <- interac %>% filter(CodigoPedido %in% cod_pedidos_ativos) %>% collect()
-tp_resp <- tp_resp %>% collect()
-agentes <- agentes %>% collect()
+pedidos <- pedidos %>%
+  filter(Codigo %in% cod_pedidos_ativos) %>% 
+  collect() %>%
+  select(-Criacao, -Alteracao)
 
-saveRDS(pedidos, here("local-files/pedidos.rds"))  
-saveRDS(interac, here("local-files/interac.rds"))  
-saveRDS(tp_resp, here("local-files/tp_resp.rds"))
-saveRDS(agentes, here("local-files/agentes.rds"))
+interac <- interac %>%
+  filter(CodigoPedido %in% cod_pedidos_ativos) %>% 
+  collect() %>% 
+  select(-Criacao, -Alteracao)
+
+tp_resp <- tp_resp %>%
+  collect() %>%
+  select(-Criacao)
+
+agentes <- agentes %>%
+  collect() %>% 
+  select(-Criacao, -Alteracao)
+
+# mini-tblai -------------------------------------------------------------------
+tblai <- list(
+  tblai_tb = tblai_tb,
+  pedidos = pedidos,
+  interac = interac,
+  tp_resp = tp_resp,
+  agentes = agentes
+)
+
+save(tblai, file = here("local-files/tblai.RData"))
