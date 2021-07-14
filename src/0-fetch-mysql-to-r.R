@@ -1,9 +1,6 @@
 library(here)
 library(tidyverse)
-library(glue)
 library(dbplyr)
-library(lubridate)
-library(magrittr)
 `%notin%` <- function(x, y) !(x %in% y)
 
 # conecta ----------------------------------------------------------------------
