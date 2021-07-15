@@ -43,6 +43,13 @@ local: `/data` ou `local/files`
 > -   [Clique
 >     aqui](https://docs.google.com/spreadsheets/d/1oyA3Pnf382uwHE1Ovg4WMGA4hdzBTiju9M5uiRguW-0)
 
+## Combinações
+
+O gráfico a seguir mostra as combinações possíveis de interações
+verificadas no pedido:
+
+![](README_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
 ## Termos chave utilizados
 
 -   Termo (`<regex>`)
