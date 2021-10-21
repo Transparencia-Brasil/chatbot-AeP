@@ -2,42 +2,39 @@ library(here)
 library(tidyverse)
 library(dbplyr)
 
-# conecta ----------------------------------------------------------------------
-source(here("local-files/conecta-mydb.R"))
+# conecta com banco de dados AeP
+source(here("local-files/conecta-mydb.R"), encoding = "utf-8")
 
-# carrega tabelas do banco de dados --------------------------------------------
-tblai_tb <- DBI::dbListTables(mydb)
+# `mysql2tibble()` envia uma query para o BD AeP (string) e retorna tabela como uma tibble
+mysql2tibble <- function(mysql_query)  DBI::dbGetQuery(mydb, mysql_query) %>% as_tibble()
 
-pedidos <- tbl(mydb, "pedidos")
-interac <- tbl(mydb, "pedidos_interacoes")
-tp_resp <- tbl(mydb, "tipo_pedido_resposta")
-agentes <- tbl(mydb, "agentes")
+# `cod_pedidos_ativos` é uma lista de códigos de pedidos ativos
+cod_pedidos_ativos <- tbl(mydb, "pedidos") %>%
+  filter(Ativo == 1) %>%
+  pull(Codigo)
 
-# código pedidos ativos
-cod_pedidos_ativos <- pedidos %>% filter(Ativo == 1) %>% pull(Codigo)
+# strings com as queries
+source(here("src/mysql-queries/pedidos.R"), encoding = "utf-8")
+source(here("src/mysql-queries/pedidos_interacoes.R"), encoding = "utf-8")
 
-# fetch no R -------------------------------------------------------------------
-pedidos <- pedidos %>%
-  filter(Codigo %in% cod_pedidos_ativos) %>% 
-  collect() %>%
-  select(-Criacao, -Alteracao)
+# Tabela `pedidos` do banco de dados do AeP
+pedidos <- mysql2tibble(query_pedidos)
 
-interac <- interac %>%
-  filter(CodigoPedido %in% cod_pedidos_ativos) %>% 
-  collect() %>% 
-  select(-Criacao, -Alteracao)
+# Tabela `pedidos_interacoes` do banco de dados do AeP
+interac <- mysql2tibble(query_pedidos_interacoes)
 
-tp_resp <- tp_resp %>%
-  collect() %>%
-  select(-Criacao)
+# Tabela `tipo_pedido_resposta` do banco de dados AeP
+tp_resp <- tbl(mydb, "tipo_pedido_resposta") %>%
+  select(-Criacao) %>% 
+  collect()
 
-agentes <- agentes %>%
-  collect() %>% 
-  select(-Criacao, -Alteracao)
+# Tabela `agentes` do banco de dados AeP  
+agentes <- tbl(mydb, "agentes") %>% 
+  select(-Criacao, -Alteracao) %>% 
+  collect()
 
-# mini-tblai -------------------------------------------------------------------
+# `tblai` é uma lista de `tibbles` extraídas do banco de dados do AeP
 tblai <- list(
-  tblai_tb = tblai_tb,
   pedidos = pedidos,
   interac = interac,
   tp_resp = tp_resp,
