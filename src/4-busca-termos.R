@@ -65,8 +65,6 @@ respostas_concatenadas  <- "data/pedidos-respostas-recursos.rds" %>%
 
   )
 
-respostas_concatenadas
-
 # strings com regex ------------------------------------------------------------
 
 # regex para quando a informação é inexistente:
@@ -206,20 +204,20 @@ respostas_concatenadas_termos %>%
   rename(
     desarrazoado = controversos_desarrazoado,
     fishing = controversos_fishing,
-    seguranca = controversos_seguranca,
+    seguranca = controversos_seguranca_nacional,
     sigilo = controversos_sigilo,
     decisao = controversos_decisao,
-    trabalho_adic = controversos_trabalho_adic,
+    trabalho_adic = controversos_trabalho_adicional,
     generico = controversos_generico,
     dados_pessoais = controversos_dados_pessoais,
     lgpd = controversos_lgpd,
-    inexistentes = controversos_inexistentes,
-    nao_competencia = controverso_nao_competencia
-  ) %>%
-  googlesheets4::write_sheet(
-    ss = google_sheet,
-    sheet = "Respostas com termos detectaos"
-  )
+    inexistentes = controversos_inexistente,
+    nao_competencia = controversos_nao_competencia
+  ) #%>%
+  # googlesheets4::write_sheet(
+  #   ss = google_sheet,
+  #   sheet = "Respostas com termos detectaos"
+  # )
 
 # aba Respostas com termos **NÃO** detectados
 # matriz de identificação dos termos
@@ -261,55 +259,65 @@ non_detected_termos <- respostas_concatenadas_termos %>%
       str_remove_all("\r") %>%
       str_squish() %>%
       replace_na("-"))
-  ) %>%
-  googlesheets4::write_sheet(
-    ss = google_sheet,
-    sheet = "Pedidos sem termos detectados (todos)"
-  )
+  ) #%>%
+  # googlesheets4::write_sheet(
+  #   ss = google_sheet,
+  #   sheet = "Pedidos sem termos detectados (todos)"
+  # )
 
 # plot com resultados da detecção dos termos
-respostas_concatenadas_termos %>%
-  filter(
-    !(!controversos_inexistente &
-      !controversos_desarrazoado &
-      !controversos_fishing &
-      !controversos_seguranca_nacional &
-      !controversos_sigilo &
-      !controversos_decisao &
-      !controversos_trabalho_adicional &
-      !controversos_generico &
-      !controversos_dados_pessoais &
-      !controversos_lgpd &
-      !controversos_nao_competencia &
-      !controversos_anexo_corrompido &
-      !controversos_resposta_incompleta)
-  ) %>% 
-  transmute(
-    codigo_pedido,
-    `Dado/info inexistente` = controversos_inexistente,
-    Desarrazoado = controversos_desarrazoado,
-    `Fishing expedition` = controversos_fishing,
-    `Seguranca nacional` = controversos_seguranca_nacional,
-    Sigilo = controversos_sigilo,
-    `Processo decisório em curso` = controversos_decisao,
-    `Trabalho adicional` = controversos_trabalho_adicional,
-    `Pedido genérico` = controversos_generico,
-    `Dados pessoais` = controversos_dados_pessoais,
-    `LGPD` = controversos_lgpd,
-    `Órgão incompetente` = controversos_nao_competencia,
-    `Recurso por anexo corrompido` = controversos_anexo_corrompido,
-    `Recurso por resposta incompleta` = controversos_resposta_incompleta
-  ) %>%
-  pivot_longer(-codigo_pedido, names_to = "termo_detectado", values_to = "prevalencia") %>%
-  group_by(termo_detectado, prevalencia) %>%
-  summarise(qt = n(), .groups = "drop") %>%
-  filter(prevalencia) %>%
-  mutate(termo_detectado = fct_reorder(termo_detectado, qt)) %>%
-  ggplot(aes(x = termo_detectado, y = qt, fill = termo_detectado)) +
-  geom_col(show.legend = F) +
-  geom_text(aes(label = qt)) +
-  coord_flip() +
-  labs(
-    x = NULL, y = "Quantidade de pedidos", title = "Número de pedidos por termo buscado",
-    subtitle = glue::glue("395 pedidos retornaram pelo menos 1 dos termos buscados\n(alguns pedidos tiveram mais de 1 termo encontrado)")
-  )
+plot_resultados_detecao_termos <- function() {
+  respostas_concatenadas_termos %>%
+    filter(
+      !(!controversos_inexistente &
+        !controversos_desarrazoado &
+        !controversos_fishing &
+        !controversos_seguranca_nacional &
+        !controversos_sigilo &
+        !controversos_decisao &
+        !controversos_trabalho_adicional &
+        !controversos_generico &
+        !controversos_dados_pessoais &
+        !controversos_lgpd &
+        !controversos_nao_competencia &
+        !controversos_anexo_corrompido &
+        !controversos_resposta_incompleta)
+    ) %>%
+    transmute(
+      codigo_pedido,
+      `Dado/info inexistente` = controversos_inexistente,
+      Desarrazoado = controversos_desarrazoado,
+      `Fishing expedition` = controversos_fishing,
+      `Seguranca nacional` = controversos_seguranca_nacional,
+      Sigilo = controversos_sigilo,
+      `Processo decisório em curso` = controversos_decisao,
+      `Trabalho adicional` = controversos_trabalho_adicional,
+      `Pedido genérico` = controversos_generico,
+      `Dados pessoais` = controversos_dados_pessoais,
+      `LGPD` = controversos_lgpd,
+      `Órgão incompetente` = controversos_nao_competencia,
+      `Recurso por anexo corrompido` = controversos_anexo_corrompido,
+      `Recurso por resposta incompleta` = controversos_resposta_incompleta
+    ) %>%
+    pivot_longer(-codigo_pedido, names_to = "termo_detectado", values_to = "prevalencia") %>%
+    group_by(termo_detectado, prevalencia) %>%
+    summarise(qt = n(), .groups = "drop") %>%
+    filter(prevalencia) %>%
+    mutate(termo_detectado = fct_reorder(termo_detectado, qt)) %>%
+    ggplot(aes(x = termo_detectado, y = qt, fill = termo_detectado)) +
+    geom_col(show.legend = F) +
+    geom_text(aes(label = qt)) +
+    coord_flip() +
+    labs(
+      x = NULL, y = "Quantidade de pedidos", title = "Número de pedidos por termo buscado",
+      subtitle = glue::glue("395 pedidos retornaram pelo menos 1 dos termos buscados\n(alguns pedidos tiveram mais de 1 termo encontrado)")
+    )
+}
+
+save(
+  respostas_concatenadas, 
+  respostas_concatenadas_termos,
+  non_detected_termos,
+  plot_resultados_detecao_termos,
+  file = here("data/busca-termos.RData")
+)

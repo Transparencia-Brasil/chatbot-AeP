@@ -50,3 +50,8 @@ plot_combinacoes_de_fluxo_interacoes()
 * Trabalho adicional (`trabalho[s]? adiciona`)
 * Pedido Genérico (`generico`)
 * LGPD (`lei geral de proteção de dados|lei de protecao de dados pessoais|13\\.?709|13\\.?853|lgpd`)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+load(here::here("data/busca-termos.RData"))
+plot_resultados_detecao_termos()
+```
