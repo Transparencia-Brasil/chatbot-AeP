@@ -3,13 +3,14 @@ library(here)
 
 # datasets que vou usar
 load(here("local-files/tblai.RData"))
-load(here("data/tblai-load.RData"))
+load(here("data/filtra-pedidos-com-recursos.RData"))
 load(here("data/fluxo-e-contagem-de-interacoes.RData"))
 
 # helper
 `%notin%` <- function(x, y) !(x %in% y)
 
-# vou remover pedidos inconsistentes
+# `inconsistentes` são aqueles pedidos que possuem mais de 1 recurso igual
+# (exemplo: um pedido 2 respostas de recursos em 1ª instância é considerado inconsistente)
 inconsistentes <- tblai$interac %>% 
   count(CodigoPedido, CodigoTipoPedidoResposta, sort = T) %>% 
   filter(n > 1) %>% 

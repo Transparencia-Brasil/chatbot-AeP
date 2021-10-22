@@ -33,7 +33,10 @@ agentes <- tbl(mydb, "agentes") %>%
   select(-Criacao, -Alteracao) %>% 
   collect()
 
-# `tblai` é uma lista de `tibbles` extraídas do banco de dados do AeP
+# **`tblai` é uma lista de `tibbles` extraídas do banco de dados do AeP**
+# - Tabela `pedidos` do banco de dados do AeP
+# - Tabela `pedidos_interacoes` do banco de dados do AeP
+# - Tabela `agentes` do banco de dados AeP
 tblai <- list(
   pedidos = pedidos,
   interac = interac,

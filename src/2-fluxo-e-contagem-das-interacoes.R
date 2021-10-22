@@ -4,12 +4,16 @@ library(lubridate)
 library(glue)
 
 # Onde vou guardar os resultados -----------------------------------------------
+
+# URL com o destino da planilha onde os resultados serão salvos
 google_sheet <- "https://docs.google.com/spreadsheets/d/1oyA3Pnf382uwHE1Ovg4WMGA4hdzBTiju9M5uiRguW-0"
 
 # data from tblai --------------------------------------------------------------
-load(here("data/tblai-load.RData"))
+load(here("data/filtra-pedidos-com-recursos.RData"))
 
 # checando por quais interações os pedidos passaram ----------------------------
+
+# É uma função recebe o dataframe `instancias` e atribui `TRUE`/`FALSE` quando uma interação é detectada ou não
 checa_fluxo_interacoes <- function(df) {
   df %>%
     group_by(CodigoPedido) %>% 
@@ -42,9 +46,13 @@ checa_fluxo_interacoes <- function(df) {
 }
 
 # inspeciona
-tblai_load$instancias %>% checa_fluxo_interacoes() %>% glimpse()
+tblai_load$instancias %>%
+  checa_fluxo_interacoes() %>%
+  glimpse()
 
 # contagem dos fluxos ----------------------------------------------------------
+
+# `contagens` é um dataframe que que conta as linhas de `instancias` conforme o fluxo de interações auferido em `checa_fluxo_interacoes(df)`
 contagens <- tblai_load$instancias %>% 
   checa_fluxo_interacoes() %>% 
   count(
@@ -65,9 +73,11 @@ contagens <- tblai_load$instancias %>%
   mutate(
     across(where(is.logical), ~ if_else(., "POSSUI", "NÃO")),
     combinacao = glue("combinacão {1:n()}")
-  ) 
+  )
 
 #plot fluxo do pedido ----------------------------------------------------------
+
+# Essa função faz um waffle chart com as interações e as respostas
 plot_combinacoes_de_fluxo_interacoes <- function() {
   
   ord <- c("pedido", "resposta_pedido", "reclamacao", "resposta_reclamacao",
@@ -97,20 +107,30 @@ plot_combinacoes_de_fluxo_interacoes <- function() {
     geom_tile(color = "gray80") +
     geom_text(data = . %>% filter(possui == "pedido"), aes(label = n), size = 3) +
     scale_x_discrete(labels = lbl_x, position = "top", expand = c(0, 0)) +
-    scale_y_discrete(labels = 37:1) +
-    labs(x = NULL,
-         y = "Combinação",
-         fill = NULL,
-         title = "Combinações - sequências possíveis de interações") +
+    scale_y_discrete(labels = 39:1) +
+    labs(
+      x = NULL,
+      y = "Combinação",
+      fill = NULL,
+      title = "Combinações - sequências possíveis de interações"
+    ) +
     theme(
       legend.position = "top",
       legend.direction = "horizontal",
       legend.justification = "left",
-      axis.ticks.x = element_blank() 
+      axis.ticks.x = element_blank()
     )
+    
 }
 
+plot_combinacoes_de_fluxo_interacoes()
+
 # organiza combinações ---------------------------------------------------------
+
+# **o dataframe`combinacao` é o resultado do join entre `instancias` e `contagens`:**
+# - `instancia`: pedidos e interações sequênciadas por orderm de respostas e recursos
+# - `contagens`: conta as linhas de `instancias` conforme o fluxo de interações auferido em `checa_fluxo_interacoes(df)`
+# *`checa_fluxo_interacoes(df)`: uma função recebe o dataframe `instancias` e atribui `TRUE`/`FALSE` quando uma interação é detectada ou não*
 combinacoes <- tblai_load$instancias %>% 
   checa_fluxo_interacoes() %>% 
   mutate(across(where(is.logical), ~ if_else(., "POSSUI", "NÃO"))) %>%
